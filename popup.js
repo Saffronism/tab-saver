@@ -231,15 +231,19 @@ function renderTabList(tabs) {
     li.className = 'tab-item';
     li.innerHTML = `
       <div class="tab-favicon">
-        ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : '<span>📄</span>'}
+        ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
       </div>
       <div class="tab-info" title="${tab.title}\n${tab.url}">
         <div class="tab-title">${escapeHtml(tab.title)}</div>
         <div class="tab-url">${escapeHtml(tab.url)}</div>
       </div>
       <div class="tab-actions">
-        <button class="icon-btn restore-btn" title="Restore this tab">↗️</button>
-        <button class="icon-btn delete-btn" title="Delete">🗑️</button>
+        <button class="icon-btn restore-btn" title="Open tab">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+        <button class="icon-btn delete-btn" title="Remove">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
     `;
 
