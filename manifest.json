@@ -25,6 +25,15 @@
   "background": {
     "service_worker": "background.js"
   },
+  "commands": {
+    "save-all-tabs": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save all tabs"
+    }
+  },
   "host_permissions": [
     "<all_urls>"
   ]
