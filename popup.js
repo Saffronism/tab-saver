@@ -11,6 +11,19 @@ const STORAGE_KEY = 'savedTabs';
 /** @type {Array<Object>} Cached saved tabs */
 let savedTabs = [];
 
+/** @type {Object} Tab categories */
+const CATEGORIES = {
+  WORK: { name: 'Work', color: '#3b82f6' },
+  SOCIAL: { name: 'Social', color: '#10b981' },
+  ENTERTAINMENT: { name: 'Entertainment', color: '#f59e0b' },
+  SHOPPING: { name: 'Shopping', color: '#ef4444' },
+  NEWS: { name: 'News', color: '#8b5cf6' },
+  TECH: { name: 'Tech', color: '#06b6d4' },
+  EDUCATION: { name: 'Education', color: '#84cc16' },
+  REFERENCE: { name: 'Reference', color: '#64748b' },
+  UNCATEGORIZED: { name: 'Other', color: '#94a3b8' }
+};
+
 /**
  * Initialize the popup when DOM is ready.
  * @returns {void}
@@ -58,7 +71,8 @@ async function handleSaveAll() {
         title: tab.title,
         url: tab.url,
         favIconUrl: tab.favIconUrl || '',
-        savedAt: new Date().toISOString()
+        savedAt: new Date().toISOString(),
+        category: 'UNCATEGORIZED'
       }));
 
     if (tabData.length === 0) {
@@ -212,55 +226,202 @@ function updateUI() {
   document.getElementById('clearAllBtn').disabled = !hasTabs;
 
   document.getElementById('emptyState').style.display = hasTabs ? 'none' : 'block';
-  document.getElementById('tabList').style.display = hasTabs ? 'block' : 'none';
+  document.getElementById('categories').style.display = hasTabs ? 'block' : 'none';
 
   renderTabList(savedTabs);
 }
 
 /**
- * Render the tab list.
+ * Categorize tabs using AI or fallback logic.
+ * @param {Array<Object>} tabs - Tabs to categorize
+ * @returns {Promise<Array<Object>>} Tabs with categories
+ */
+async function categorizeTabs(tabs) {
+  // For now, use simple keyword-based categorization
+  // Later we can integrate AI APIs
+  return tabs.map(tab => {
+    const title = tab.title.toLowerCase();
+    const url = tab.url.toLowerCase();
+    
+    // Simple keyword-based categorization
+    if (title.includes('github') || url.includes('github') || 
+        title.includes('stackoverflow') || url.includes('stackoverflow') ||
+        title.includes('code') || url.includes('dev') ||
+        title.includes('terminal') || url.includes('console')) {
+      return { ...tab, category: 'TECH' };
+    }
+    
+    if (title.includes('facebook') || url.includes('facebook') ||
+        title.includes('twitter') || url.includes('twitter') ||
+        title.includes('instagram') || url.includes('instagram') ||
+        title.includes('linkedin') || url.includes('linkedin')) {
+      return { ...tab, category: 'SOCIAL' };
+    }
+    
+    if (title.includes('youtube') || url.includes('youtube') ||
+        title.includes('netflix') || url.includes('netflix') ||
+        title.includes('twitch') || url.includes('twitch') ||
+        title.includes('reddit') || url.includes('reddit')) {
+      return { ...tab, category: 'ENTERTAINMENT' };
+    }
+    
+    if (title.includes('amazon') || url.includes('amazon') ||
+        title.includes('shop') || url.includes('shop') ||
+        title.includes('buy') || url.includes('buy') ||
+        title.includes('cart') || url.includes('cart')) {
+      return { ...tab, category: 'SHOPPING' };
+    }
+    
+    if (title.includes('news') || url.includes('news') ||
+        title.includes('bbc') || url.includes('bbc') ||
+        title.includes('cnn') || url.includes('cnn') ||
+        title.includes('times') || url.includes('times')) {
+      return { ...tab, category: 'NEWS' };
+    }
+    
+    if (title.includes('work') || url.includes('work') ||
+        title.includes('office') || url.includes('office') ||
+        title.includes('slack') || url.includes('slack') ||
+        title.includes('teams') || url.includes('teams')) {
+      return { ...tab, category: 'WORK' };
+    }
+    
+    if (title.includes('learn') || url.includes('learn') ||
+        title.includes('course') || url.includes('course') ||
+        title.includes('tutorial') || url.includes('tutorial') ||
+        title.includes('edu') || url.includes('edu')) {
+      return { ...tab, category: 'EDUCATION' };
+    }
+    
+    if (title.includes('wiki') || url.includes('wiki') ||
+        title.includes('docs') || url.includes('docs') ||
+        title.includes('documentation') || url.includes('documentation')) {
+      return { ...tab, category: 'REFERENCE' };
+    }
+    
+    return { ...tab, category: 'UNCATEGORIZED' };
+  });
+}
+
+/**
+ * Group tabs by category.
+ * @param {Array<Object>} tabs - Tabs to group
+ * @returns {Object} Tabs grouped by category
+ */
+function groupTabsByCategory(tabs) {
+  const grouped = {};
+  
+  // Initialize all categories
+  Object.keys(CATEGORIES).forEach(category => {
+    grouped[category] = [];
+  });
+  
+  // Group tabs
+  tabs.forEach(tab => {
+    const category = tab.category || 'UNCATEGORIZED';
+    grouped[category].push(tab);
+  });
+  
+  return grouped;
+}
+
+/**
+ * Render categorized tabs.
+ * @param {Array<Object>} tabs - Tabs to render
+ * @returns {void}
+ */
+async function renderCategorizedTabs(tabs) {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  
+  // Categorize tabs
+  const categorizedTabs = await categorizeTabs(tabs);
+  const grouped = groupTabsByCategory(categorizedTabs);
+  
+  // Render each category
+  Object.entries(grouped).forEach(([categoryKey, categoryTabs]) => {
+    if (categoryTabs.length === 0) return;
+    
+    const category = CATEGORIES[categoryKey];
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'category';
+    categoryDiv.innerHTML = `
+      <div class="category-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="category-toggle">▼</span>
+          <span class="category-name">${category.name}</span>
+        </div>
+        <span class="category-count">${categoryTabs.length}</span>
+      </div>
+      <div class="category-content">
+        <ul class="tab-list"></ul>
+      </div>
+    `;
+    
+    const list = categoryDiv.querySelector('.tab-list');
+    categoryTabs.forEach(tab => {
+      const li = createTabElement(tab);
+      list.appendChild(li);
+    });
+    
+    // Add toggle functionality
+    const header = categoryDiv.querySelector('.category-header');
+    header.addEventListener('click', () => {
+      categoryDiv.classList.toggle('collapsed');
+    });
+    
+    container.appendChild(categoryDiv);
+  });
+}
+
+/**
+ * Create a tab element.
+ * @param {Object} tab - Tab data
+ * @returns {HTMLElement} Tab element
+ */
+function createTabElement(tab) {
+  const li = document.createElement('li');
+  li.className = 'tab-item';
+  li.innerHTML = `
+    <div class="tab-favicon">
+      ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
+    </div>
+    <div class="tab-info" title="${tab.title}\n${tab.url}">
+      <div class="tab-title">${escapeHtml(tab.title)}</div>
+      <div class="tab-url">${escapeHtml(tab.url)}</div>
+    </div>
+    <div class="tab-actions">
+      <button class="icon-btn restore-btn" title="Open tab">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
+      <button class="icon-btn delete-btn" title="Remove">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  `;
+
+  li.querySelector('.restore-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    restoreSingleTab(tab.id);
+  });
+
+  li.querySelector('.delete-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteSingleTab(tab.id);
+  });
+
+  li.addEventListener('click', () => restoreSingleTab(tab.id));
+
+  return li;
+}
+
+/**
+ * Render the tab list (legacy function for search).
  * @param {Array<Object>} tabs - Tabs to render
  * @returns {void}
  */
 function renderTabList(tabs) {
-  const list = document.getElementById('tabList');
-  list.innerHTML = '';
-
-  tabs.forEach((tab) => {
-    const li = document.createElement('li');
-    li.className = 'tab-item';
-    li.innerHTML = `
-      <div class="tab-favicon">
-        ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
-      </div>
-      <div class="tab-info" title="${tab.title}\n${tab.url}">
-        <div class="tab-title">${escapeHtml(tab.title)}</div>
-        <div class="tab-url">${escapeHtml(tab.url)}</div>
-      </div>
-      <div class="tab-actions">
-        <button class="icon-btn restore-btn" title="Open tab">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        </button>
-        <button class="icon-btn delete-btn" title="Remove">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-    `;
-
-    li.querySelector('.restore-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      restoreSingleTab(tab.id);
-    });
-
-    li.querySelector('.delete-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteSingleTab(tab.id);
-    });
-
-    li.addEventListener('click', () => restoreSingleTab(tab.id));
-
-    list.appendChild(li);
-  });
+  renderCategorizedTabs(tabs);
 }
 
 /**
