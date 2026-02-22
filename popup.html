@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Saver</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Tab Saver</h1>
+      <span class="tab-count" id="tabCount">0 tabs</span>
+    </header>
+
+    <div class="actions">
+      <button id="saveAllBtn" class="btn btn-primary">
+        Save All Tabs
+      </button>
+      <button id="restoreAllBtn" class="btn btn-secondary" disabled>
+        Restore All
+      </button>
+    </div>
+
+    <div class="search-box">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Search saved tabs..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="saved-tabs" id="savedTabs">
+      <div class="empty-state" id="emptyState">
+        <p>No saved tabs yet</p>
+        <p class="hint">Click "Save All Tabs" to get started</p>
+      </div>
+      <ul class="tab-list" id="tabList"></ul>
+    </div>
+
+    <div class="footer">
+      <button id="clearAllBtn" class="btn btn-danger" disabled>
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

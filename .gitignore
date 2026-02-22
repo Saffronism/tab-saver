@@ -1,0 +1,31 @@
+# Chrome Extension
+*.pem
+*.crx
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Testing
+coverage/
+.nyc_output/
