@@ -64,6 +64,7 @@ function setupEventListeners() {
   document.getElementById('saveAllBtn').addEventListener('click', handleSaveAll);
   document.getElementById('restoreAllBtn').addEventListener('click', handleRestoreAll);
   document.getElementById('clearAllBtn').addEventListener('click', handleClearAll);
+  document.getElementById('feedbackBtn').addEventListener('click', handleFeedback);
   document.getElementById('searchInput').addEventListener('input', handleSearch);
 }
 
@@ -541,6 +542,18 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+/**
+ * Handle feedback button click.
+ * @returns {void}
+ */
+function handleFeedback() {
+  const subject = encodeURIComponent('Tab Saver Extension Feedback');
+  const body = encodeURIComponent('Hi!\n\nI\'m using your Tab Saver Chrome extension and wanted to share some feedback:\n\n');
+  const mailtoUrl = `mailto:shannicrankcafe@gmail.com?subject=${subject}&body=${body}`;
+  
+  window.open(mailtoUrl, '_blank');
 }
 
 /**
