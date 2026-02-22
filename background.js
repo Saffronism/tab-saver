@@ -59,7 +59,9 @@ async function saveAllTabs() {
         url: tab.url,
         favIconUrl: tab.favIconUrl || '',
         savedAt: new Date().toISOString(),
-        category: 'UNCATEGORIZED'
+        category: 'UNCATEGORIZED',
+        formType: null,
+        deadline: null
       }));
 
     if (tabData.length === 0) return;

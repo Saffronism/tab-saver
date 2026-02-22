@@ -282,6 +282,38 @@ body {
   text-overflow: ellipsis;
 }
 
+.tab-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.form-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #ef4444;
+  background: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: capitalize;
+}
+
+.deadline {
+  font-size: 10px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.tab-item.is-form {
+  background: #fffafa;
+  border-left: 3px solid #ef4444;
+}
+
+.tab-item.is-form:hover {
+  background: #fef2f2;
+}
+
 .tab-actions {
   display: flex;
   gap: 2px;
