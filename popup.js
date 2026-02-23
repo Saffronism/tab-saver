@@ -146,13 +146,20 @@ async function handleSaveAll() {
  */
 async function handleRestoreAll() {
   try {
-    for (const tab of savedTabs) {
+    const tabsToRestore = [...savedTabs];
+    
+    // Clear from storage first before popup potentially closes
+    savedTabs = [];
+    await chrome.storage.local.set({ [STORAGE_KEY]: [] });
+    updateUI();
+
+    for (const tab of tabsToRestore) {
       await chrome.tabs.create({
         url: tab.url,
         active: false
       });
     }
-    showNotification(`Restored ${savedTabs.length} tabs`);
+    showNotification(`Restored ${tabsToRestore.length} tabs`);
   } catch (error) {
     console.error('Error restoring tabs:', error);
     showNotification('Failed to restore tabs');
@@ -169,13 +176,14 @@ async function restoreSingleTab(tabId) {
     const tab = savedTabs.find((t) => t.id === tabId);
     if (!tab) return;
 
-    await chrome.tabs.create({ url: tab.url });
-
-    // Remove from saved list
+    // Remove from saved list first before popup potentially closes
     savedTabs = savedTabs.filter((t) => t.id !== tabId);
     await chrome.storage.local.set({ [STORAGE_KEY]: savedTabs });
 
     updateUI();
+    
+    // Create tab last, as this will typically close the popup
+    await chrome.tabs.create({ url: tab.url });
   } catch (error) {
     console.error('Error restoring tab:', error);
     showNotification('Failed to restore tab');
