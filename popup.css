@@ -51,7 +51,7 @@ body {
 
 /* Header */
 .header {
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
@@ -62,22 +62,22 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .search-toggle {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,33 +95,41 @@ body {
   color: #fff;
 }
 
+.search-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
 .tab-count {
-  font-size: 11px;
+  font-size: 10px;
   color: #999;
   font-weight: 500;
   background: #f5f5f5;
-  padding: 4px 8px;
-  border-radius: 12px;
+  padding: 3px 6px;
+  border-radius: 10px;
 }
 
 /* Buttons */
 .btn {
-  padding: 7px 12px;
+  padding: 5px 10px;
   border: none;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 5px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: #f5f5f5;
   color: #333;
+  white-space: nowrap;
 }
 
 .btn svg {
   flex-shrink: 0;
+  width: 12px;
+  height: 12px;
 }
 
 .btn:disabled {
@@ -155,7 +163,7 @@ body {
   background: #f5f5f5;
   color: #666;
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 3px 8px;
   flex: 0;
 }
 
@@ -168,7 +176,7 @@ body {
   background: #f5f5f5;
   color: #666;
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 3px 8px;
   flex: 0;
 }
 
@@ -512,12 +520,12 @@ body {
 
 /* Footer */
 .footer {
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-top: 1px solid #f0f0f0;
   background: #fafafa;
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
 }
 
 /* Scrollbar */
