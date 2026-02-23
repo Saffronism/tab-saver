@@ -66,6 +66,36 @@ body {
   letter-spacing: -0.3px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-toggle {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.15s ease;
+}
+
+.search-toggle:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.search-toggle.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+
 .tab-count {
   font-size: 11px;
   color: #999;
@@ -148,8 +178,17 @@ body {
 
 /* Search */
 .search-box {
-  padding: 12px 16px;
+  padding: 0 16px;
   background: #fff;
+  max-height: 52px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.search-box.collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .search-box input {
@@ -173,11 +212,53 @@ body {
   background: #fff;
 }
 
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.tab-nav-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-nav-btn:hover {
+  color: #666;
+  background: #fafafa;
+}
+
+.tab-nav-btn.active {
+  color: #1a1a1a;
+  border-bottom-color: #1a1a1a;
+}
+
+/* Tab Panels */
+.tab-panel {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+}
+
+.tab-panel.active {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Saved Tabs */
 .saved-tabs {
   flex: 1;
   overflow-y: auto;
-  max-height: 320px;
+  max-height: 280px;
 }
 
 .empty-state {
@@ -392,8 +473,32 @@ body {
   color: #555;
 }
 
+.icon-btn.pin-btn:hover {
+  color: #f59e0b;
+}
+
+.icon-btn.pin-btn.pinned {
+  color: #f59e0b;
+}
+
 .uncategorized {
   opacity: 0.7;
+}
+
+/* Pinned List */
+.pinned-list {
+  list-style: none;
+  padding: 0;
+}
+
+.pinned-item {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  padding-left: 13px;
+}
+
+.pinned-item:hover {
+  background: #fef3c7;
 }
 
 /* Footer */

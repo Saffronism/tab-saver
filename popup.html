@@ -10,7 +10,15 @@
   <div class="container">
     <header class="header">
       <h1>Tab Saver</h1>
-      <span class="tab-count" id="tabCount">0 tabs</span>
+      <div class="header-actions">
+        <button class="search-toggle" id="searchToggle" title="Search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </button>
+        <span class="tab-count" id="tabCount">0 tabs</span>
+      </div>
     </header>
 
     <div class="actions">
@@ -22,7 +30,7 @@
       </button>
     </div>
 
-    <div class="search-box">
+    <div class="search-box collapsed" id="searchBox">
       <input 
         type="text" 
         id="searchInput" 
@@ -31,12 +39,32 @@
       >
     </div>
 
-    <div class="saved-tabs" id="savedTabs">
-      <div class="empty-state" id="emptyState">
-        <p>No saved tabs yet</p>
-        <p class="hint">Click "Save All Tabs" to get started</p>
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-nav-btn active" data-tab="saved">Saved</button>
+      <button class="tab-nav-btn" data-tab="pinned">Pinned</button>
+    </div>
+
+    <!-- Saved Tabs Panel -->
+    <div class="tab-panel active" id="savedPanel">
+      <div class="saved-tabs" id="savedTabs">
+        <div class="empty-state" id="emptyState">
+          <p>No saved tabs yet</p>
+          <p class="hint">Click "Save All Tabs" to get started</p>
+        </div>
+        <div class="categories" id="categories"></div>
       </div>
-      <div class="categories" id="categories"></div>
+    </div>
+
+    <!-- Pinned Tabs Panel -->
+    <div class="tab-panel" id="pinnedPanel">
+      <div class="saved-tabs" id="pinnedTabs">
+        <div class="empty-state" id="pinnedEmptyState">
+          <p>No pinned tabs</p>
+          <p class="hint">Pin tabs for quick reference</p>
+        </div>
+        <div class="pinned-list" id="pinnedList"></div>
+      </div>
     </div>
 
     <div class="footer">

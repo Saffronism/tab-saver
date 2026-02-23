@@ -8,8 +8,14 @@
 /** @type {string} Storage key for saved tabs */
 const STORAGE_KEY = 'savedTabs';
 
+/** @type {string} Storage key for pinned tabs */
+const PINNED_STORAGE_KEY = 'pinnedTabs';
+
 /** @type {Array<Object>} Cached saved tabs */
 let savedTabs = [];
+
+/** @type {Array<Object>} Cached pinned tabs */
+let pinnedTabs = [];
 
 /** @type {Object} Tab categories */
 const CATEGORIES = {
@@ -54,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializePopup() {
   setupEventListeners();
   await loadSavedTabs();
+  await loadPinnedTabs();
   updateUI();
 }
 
@@ -67,6 +74,12 @@ function setupEventListeners() {
   document.getElementById('clearAllBtn').addEventListener('click', handleClearAll);
   document.getElementById('feedbackBtn').addEventListener('click', handleFeedback);
   document.getElementById('searchInput').addEventListener('input', handleSearch);
+  document.getElementById('searchToggle').addEventListener('click', toggleSearch);
+  
+  // Tab navigation
+  document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+  });
 }
 
 /**
@@ -207,6 +220,126 @@ async function deleteSingleTab(tabId) {
 }
 
 /**
+ * Pin a tab to the pinned list for permanent reference.
+ * @param {string} tabId - ID of tab to pin
+ * @returns {Promise<void>}
+ */
+async function pinTab(tabId) {
+  try {
+    const tab = savedTabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    
+    // Check if already pinned
+    if (pinnedTabs.some((t) => t.url === tab.url)) {
+      showNotification('Tab already pinned');
+      return;
+    }
+    
+    // Add to pinned tabs
+    const pinnedTab = {
+      ...tab,
+      id: Date.now() + Math.random(),
+      pinnedAt: new Date().toISOString()
+    };
+    pinnedTabs.push(pinnedTab);
+    await chrome.storage.local.set({ [PINNED_STORAGE_KEY]: pinnedTabs });
+    
+    showNotification('Tab pinned');
+    renderPinnedTabs();
+  } catch (error) {
+    console.error('Error pinning tab:', error);
+    showNotification('Failed to pin tab');
+  }
+}
+
+/**
+ * Unpin a tab from the pinned list.
+ * @param {string} tabId - ID of tab to unpin
+ * @returns {Promise<void>}
+ */
+async function unpinTab(tabId) {
+  try {
+    pinnedTabs = pinnedTabs.filter((t) => t.id !== tabId);
+    await chrome.storage.local.set({ [PINNED_STORAGE_KEY]: pinnedTabs });
+    showNotification('Tab unpinned');
+    renderPinnedTabs();
+  } catch (error) {
+    console.error('Error unpinning tab:', error);
+    showNotification('Failed to unpin tab');
+  }
+}
+
+/**
+ * Open a pinned tab in a new browser tab.
+ * @param {string} tabId - ID of pinned tab to open
+ * @returns {Promise<void>}
+ */
+async function openPinnedTab(tabId) {
+  try {
+    const tab = pinnedTabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    await chrome.tabs.create({ url: tab.url });
+  } catch (error) {
+    console.error('Error opening pinned tab:', error);
+    showNotification('Failed to open tab');
+  }
+}
+
+/**
+ * Render pinned tabs list.
+ * @returns {void}
+ */
+function renderPinnedTabs() {
+  const container = document.getElementById('pinnedList');
+  const emptyState = document.getElementById('pinnedEmptyState');
+  
+  if (pinnedTabs.length === 0) {
+    emptyState.style.display = 'block';
+    container.innerHTML = '';
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  container.innerHTML = '';
+  
+  pinnedTabs.forEach(tab => {
+    const div = document.createElement('div');
+    div.className = 'tab-item pinned-item';
+    div.innerHTML = `
+      <div class="tab-favicon">
+        ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
+      </div>
+      <div class="tab-info">
+        <div class="tab-title">${escapeHtml(tab.title)}</div>
+        <div class="tab-url">${escapeHtml(tab.url)}</div>
+      </div>
+      <div class="tab-actions">
+        <button class="icon-btn open-btn" title="Open">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+        <button class="icon-btn unpin-btn" title="Unpin">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        </button>
+      </div>
+    `;
+    
+    div.querySelector('.open-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPinnedTab(tab.id);
+    });
+    
+    div.querySelector('.unpin-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      unpinTab(tab.id);
+    });
+    
+    div.addEventListener('click', () => openPinnedTab(tab.id));
+    
+    container.appendChild(div);
+  });
+}
+
+/**
  * Clear all saved tabs.
  * @returns {Promise<void>}
  */
@@ -222,6 +355,46 @@ async function handleClearAll() {
     console.error('Error clearing tabs:', error);
     showNotification('Failed to clear tabs');
   }
+}
+
+/**
+ * Toggle search box visibility.
+ * @returns {void}
+ */
+function toggleSearch() {
+  const searchBox = document.getElementById('searchBox');
+  const searchToggle = document.getElementById('searchToggle');
+  const searchInput = document.getElementById('searchInput');
+  
+  searchBox.classList.toggle('collapsed');
+  searchToggle.classList.toggle('active');
+  
+  if (!searchBox.classList.contains('collapsed')) {
+    searchInput.focus();
+  } else {
+    searchInput.value = '';
+    renderTabList(savedTabs);
+  }
+}
+
+/**
+ * Switch between Saved and Pinned tabs.
+ * @param {string} tabName - 'saved' or 'pinned'
+ * @returns {void}
+ */
+function switchTab(tabName) {
+  // Update nav buttons
+  document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  
+  // Update panels
+  document.getElementById('savedPanel').classList.toggle('active', tabName === 'saved');
+  document.getElementById('pinnedPanel').classList.toggle('active', tabName === 'pinned');
+  
+  // Update tab count based on active panel
+  const count = tabName === 'saved' ? savedTabs.length : pinnedTabs.length;
+  document.getElementById('tabCount').textContent = `${count} tab${count !== 1 ? 's' : ''}`;
 }
 
 /**
@@ -245,6 +418,20 @@ function handleSearch(event) {
  */
 async function loadSavedTabs() {
   savedTabs = await getStoredTabs();
+}
+
+/**
+ * Load pinned tabs from storage.
+ * @returns {Promise<void>}
+ */
+async function loadPinnedTabs() {
+  try {
+    const result = await chrome.storage.local.get(PINNED_STORAGE_KEY);
+    pinnedTabs = result[PINNED_STORAGE_KEY] || [];
+  } catch (error) {
+    console.error('Error loading pinned tabs:', error);
+    pinnedTabs = [];
+  }
 }
 
 /**
@@ -277,6 +464,7 @@ function updateUI() {
   document.getElementById('categories').style.display = hasTabs ? 'block' : 'none';
 
   renderTabList(savedTabs);
+  renderPinnedTabs();
 }
 
 /**
@@ -552,6 +740,9 @@ function createTabElement(tab) {
       <div class="tab-url">${escapeHtml(tab.url)}</div>
     </div>
     <div class="tab-actions">
+      <button class="icon-btn pin-btn" title="Pin for reference">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      </button>
       <button class="icon-btn restore-btn" title="Open tab">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </button>
@@ -560,6 +751,11 @@ function createTabElement(tab) {
       </button>
     </div>
   `;
+
+  li.querySelector('.pin-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    pinTab(tab.id);
+  });
 
   li.querySelector('.restore-btn').addEventListener('click', (e) => {
     e.stopPropagation();
