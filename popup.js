@@ -20,15 +20,16 @@ let pinnedTabs = [];
 /** @type {Object} Tab categories */
 const CATEGORIES = {
   APPLICATIONS: { name: 'Applications & Forms', color: '#ef4444', priority: 1 },
-  WORK: { name: 'Work', color: '#3b82f6', priority: 2 },
-  SOCIAL: { name: 'Social', color: '#10b981', priority: 3 },
-  ENTERTAINMENT: { name: 'Entertainment', color: '#f59e0b', priority: 4 },
-  SHOPPING: { name: 'Shopping', color: '#ec4899', priority: 5 },
-  NEWS: { name: 'News', color: '#8b5cf6', priority: 6 },
-  TECH: { name: 'Tech', color: '#06b6d4', priority: 7 },
-  EDUCATION: { name: 'Education', color: '#84cc16', priority: 8 },
-  REFERENCE: { name: 'Reference', color: '#64748b', priority: 9 },
-  UNCATEGORIZED: { name: 'Other', color: '#94a3b8', priority: 10 }
+  AI: { name: 'AI', color: '#8b5cf6', priority: 2 },
+  WORK: { name: 'Work', color: '#3b82f6', priority: 3 },
+  SOCIAL: { name: 'Social', color: '#10b981', priority: 4 },
+  ENTERTAINMENT: { name: 'Entertainment', color: '#f59e0b', priority: 5 },
+  SHOPPING: { name: 'Shopping', color: '#ec4899', priority: 6 },
+  NEWS: { name: 'News', color: '#64748b', priority: 7 },
+  TECH: { name: 'Tech', color: '#06b6d4', priority: 8 },
+  EDUCATION: { name: 'Education', color: '#84cc16', priority: 9 },
+  REFERENCE: { name: 'Reference', color: '#64748b', priority: 10 },
+  UNCATEGORIZED: { name: 'Other', color: '#94a3b8', priority: 11 }
 };
 
 /** @type {Object} Form/Application detection patterns */
@@ -286,11 +287,11 @@ async function openPinnedTab(tabId) {
 }
 
 /**
- * Render pinned tabs list.
+ * Render pinned tabs list with categories.
  * @returns {void}
  */
 function renderPinnedTabs() {
-  const container = document.getElementById('pinnedList');
+  const container = document.getElementById('pinnedCategories');
   const emptyState = document.getElementById('pinnedEmptyState');
   
   if (pinnedTabs.length === 0) {
@@ -302,41 +303,172 @@ function renderPinnedTabs() {
   emptyState.style.display = 'none';
   container.innerHTML = '';
   
-  pinnedTabs.forEach(tab => {
-    const div = document.createElement('div');
-    div.className = 'tab-item pinned-item';
-    div.innerHTML = `
-      <div class="tab-favicon">
-        ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
+  // Categorize pinned tabs (apply categorization if missing)
+  const categorizedPinned = pinnedTabs.map(tab => {
+    if (tab.category && tab.category !== 'UNCATEGORIZED') return tab;
+    // Re-categorize using the same logic
+    const formInfo = detectForm(tab);
+    if (formInfo.isForm) {
+      return { ...tab, category: 'APPLICATIONS', formType: formInfo.formType, deadline: formInfo.deadline };
+    }
+    const domain = extractDomain(tab.url);
+    for (const [pattern, category] of Object.entries(DOMAIN_CATEGORIES)) {
+      if (domain === pattern || domain.endsWith(pattern) || domain.includes(pattern)) {
+        return { ...tab, category };
+      }
+    }
+    const text = `${tab.title.toLowerCase()} ${tab.url.toLowerCase()}`;
+    // Apply same keyword logic - AI first
+    if (text.includes('claude') || text.includes('gpt') || text.includes('chatgpt') ||
+        text.includes('openai') || text.includes('anthropic') || text.includes('x.ai') ||
+        text.includes('xai') || text.includes('grok') || text.includes('perplexity') ||
+        text.includes('midjourney') || text.includes('stable diffusion') || text.includes('runway') ||
+        text.includes('huggingface') || text.includes('llm') || text.includes('large language model') ||
+        text.includes('prompt') || text.includes('prompts') || text.includes('agent') ||
+        text.includes('agents') || text.includes('agentic') || text.includes('autonomous') ||
+        text.includes('cursor') || text.includes('windsurf') || text.includes('copilot') ||
+        text.includes('tabnine') || text.includes('aider') || text.includes('replit') ||
+        text.includes('bolt.new') || text.includes('v0.dev') || text.includes('zed') ||
+        text.includes('artificial intelligence') || text.includes('machine learning') ||
+        text.includes('deep learning') || text.includes('neural network') || text.includes('transformer') ||
+        text.includes('generative ai') || text.includes('genai') || text.includes('gen ai') ||
+        text.includes('ai model') || text.includes('ai tool') || text.includes('ai assistant') ||
+        text.includes('chatbot') || text.includes('conversation ai') || text.includes('nlp') ||
+        text.includes('natural language') || text.includes('computer vision') || text.includes('image generation') ||
+        text.includes('text generation') || text.includes('code generation') || text.includes('skill.md') ||
+        text.includes('glm') || text.includes('zhipu') || text.includes('qwen') || text.includes('llama') ||
+        text.includes('mistral') || text.includes('gemini') || text.includes('bard') ||
+        text.includes('deepseek') || text.includes('yi') || text.includes('moonshot') ||
+        text.includes('kimi') || text.includes('doubao') || text.includes('ernie') ||
+        text.includes('palm') || text.includes('falcon') || text.includes('vicuna') ||
+        text.includes('alpaca') || text.includes('stablelm') || text.includes('dolly')) {
+      return { ...tab, category: 'AI' };
+    }
+    // Tech keywords
+    if (text.includes('github') || text.includes('stackoverflow') || text.includes('code') || text.includes('dev') ||
+        text.includes('terminal') || text.includes('console') || text.includes('product') || text.includes('pricing') ||
+        text.includes('features') || text.includes('platform') || text.includes('software') || text.includes('app') ||
+        text.includes('api') || text.includes('sdk') || text.includes('saas') || text.includes('startup') ||
+        text.includes('tech') || text.includes('cloud') || text.includes('data') ||
+        text.includes('framework') || text.includes('library') || text.includes('developer') || text.includes('documentation') ||
+        text.includes('git') || text.includes('programming') || text.includes('javascript') || text.includes('python') ||
+        text.includes('react') || text.includes('node') || text.includes('typescript') || text.includes('rust') ||
+        text.includes('golang') || text.includes('open source')) {
+      return { ...tab, category: 'TECH' };
+    }
+    if (text.includes('facebook') || text.includes('twitter') || text.includes('instagram') || text.includes('linkedin') ||
+        text.includes('social') || text.includes('profile')) {
+      return { ...tab, category: 'SOCIAL' };
+    }
+    if (text.includes('youtube') || text.includes('netflix') || text.includes('twitch') || text.includes('reddit') ||
+        text.includes('spotify') || text.includes('music') || text.includes('video') || text.includes('movie') ||
+        text.includes('game') || text.includes('play') || text.includes('entertainment')) {
+      return { ...tab, category: 'ENTERTAINMENT' };
+    }
+    if (text.includes('amazon') || text.includes('shop') || text.includes('buy') || text.includes('cart') ||
+        text.includes('checkout') || text.includes('order') || text.includes('price') || text.includes('store')) {
+      return { ...tab, category: 'SHOPPING' };
+    }
+    if (text.includes('news') || text.includes('bbc') || text.includes('cnn') || text.includes('times') ||
+        text.includes('breaking') || text.includes('headline') || text.includes('latest') || text.includes('/news/')) {
+      return { ...tab, category: 'NEWS' };
+    }
+    if (text.includes('work') || text.includes('office') || text.includes('slack') || text.includes('teams') ||
+        text.includes('meeting') || text.includes('calendar') || text.includes('email') || text.includes('inbox') ||
+        text.includes('document') || text.includes('spreadsheet') || text.includes('presentation') || text.includes('project')) {
+      return { ...tab, category: 'WORK' };
+    }
+    if (text.includes('learn') || text.includes('course') || text.includes('tutorial') || text.includes('edu') ||
+        text.includes('training') || text.includes('class') || text.includes('lesson') || text.includes('education')) {
+      return { ...tab, category: 'EDUCATION' };
+    }
+    if (text.includes('wiki') || text.includes('docs') || text.includes('documentation') || text.includes('reference') ||
+        text.includes('dictionary') || text.includes('encyclopedia')) {
+      return { ...tab, category: 'REFERENCE' };
+    }
+    return { ...tab, category: 'UNCATEGORIZED' };
+  });
+  
+  const grouped = groupTabsByCategory(categorizedPinned);
+  const sortedCategories = getSortedCategories();
+  
+  // Render each category in priority order
+  sortedCategories.forEach(categoryKey => {
+    const categoryTabs = grouped[categoryKey];
+    if (categoryTabs.length === 0) return;
+    
+    const category = CATEGORIES[categoryKey];
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'category';
+    categoryDiv.innerHTML = `
+      <div class="category-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="category-toggle">▼</span>
+          <span class="category-name">${category.name}</span>
+        </div>
+        <span class="category-count">${categoryTabs.length}</span>
       </div>
-      <div class="tab-info">
-        <div class="tab-title">${escapeHtml(tab.title)}</div>
-        <div class="tab-url">${escapeHtml(tab.url)}</div>
-      </div>
-      <div class="tab-actions">
-        <button class="icon-btn open-btn" title="Open">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        </button>
-        <button class="icon-btn unpin-btn" title="Unpin">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-        </button>
+      <div class="category-content">
+        <ul class="tab-list"></ul>
       </div>
     `;
     
-    div.querySelector('.open-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openPinnedTab(tab.id);
+    const list = categoryDiv.querySelector('.tab-list');
+    categoryTabs.forEach(tab => {
+      const li = createPinnedTabElement(tab);
+      list.appendChild(li);
     });
     
-    div.querySelector('.unpin-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      unpinTab(tab.id);
+    // Add toggle functionality
+    const header = categoryDiv.querySelector('.category-header');
+    header.addEventListener('click', () => {
+      categoryDiv.classList.toggle('collapsed');
     });
     
-    div.addEventListener('click', () => openPinnedTab(tab.id));
-    
-    container.appendChild(div);
+    container.appendChild(categoryDiv);
   });
+}
+
+/**
+ * Create a pinned tab element.
+ * @param {Object} tab - Tab data
+ * @returns {HTMLElement} Tab element
+ */
+function createPinnedTabElement(tab) {
+  const li = document.createElement('li');
+  li.className = 'tab-item pinned-item';
+  
+  li.innerHTML = `
+    <div class="tab-favicon">
+      ${tab.favIconUrl ? `<img src="${tab.favIconUrl}" alt="">` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}
+    </div>
+    <div class="tab-info">
+      <div class="tab-title">${escapeHtml(tab.title)}</div>
+      <div class="tab-url">${escapeHtml(tab.url)}</div>
+    </div>
+    <div class="tab-actions">
+      <button class="icon-btn open-btn" title="Open">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
+      <button class="icon-btn unpin-btn" title="Unpin">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      </button>
+    </div>
+  `;
+
+  li.querySelector('.open-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openPinnedTab(tab.id);
+  });
+
+  li.querySelector('.unpin-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    unpinTab(tab.id);
+  });
+
+  li.addEventListener('click', () => openPinnedTab(tab.id));
+
+  return li;
 }
 
 /**
@@ -533,8 +665,181 @@ function extractDeadline(text) {
   return null;
 }
 
+/** @type {Object} Domain-based category mapping */
+const DOMAIN_CATEGORIES = {
+  // AI
+  'claude.ai': 'AI',
+  'anthropic.com': 'AI',
+  'openai.com': 'AI',
+  'chatgpt.com': 'AI',
+  'chat.openai.com': 'AI',
+  'cursor.com': 'AI',
+  'cursor.sh': 'AI',
+  'x.ai': 'AI',
+  'grok.com': 'AI',
+  'perplexity.ai': 'AI',
+  'midjourney.com': 'AI',
+  'stability.ai': 'AI',
+  'runwayml.com': 'AI',
+  'replicate.com': 'AI',
+  'together.ai': 'AI',
+  'huggingface.co': 'AI',
+  'kaggle.com': 'AI',
+  'colab.research.google.com': 'AI',
+  'deepmind.com': 'AI',
+  'character.ai': 'AI',
+  'poe.com': 'AI',
+  'you.com': 'AI',
+  'phind.com': 'AI',
+  'writesonic.com': 'AI',
+  'jasper.ai': 'AI',
+  'copy.ai': 'AI',
+  'gamma.app': 'AI',
+  'notion.so': 'AI',
+  'replit.com': 'AI',
+  'v0.dev': 'AI',
+  'bolt.new': 'AI',
+  'windsurf.ai': 'AI',
+  'aider.chat': 'AI',
+  'zed.dev': 'AI',
+  'supermaven.com': 'AI',
+  'tabnine.com': 'AI',
+  'copilot.github.com': 'AI',
+  'github.com/features/copilot': 'AI',
+  
+  // Tech
+  'github.com': 'TECH',
+  'stackoverflow.com': 'TECH',
+  'stackexchange.com': 'TECH',
+  'dev.to': 'TECH',
+  'medium.com': 'TECH',
+  'hashnode.com': 'TECH',
+  'producthunt.com': 'TECH',
+  'hackernews.com': 'TECH',
+  'news.ycombinator.com': 'TECH',
+  'vercel.com': 'TECH',
+  'netlify.com': 'TECH',
+  'render.com': 'TECH',
+  'railway.app': 'TECH',
+  'supabase.com': 'TECH',
+  'firebase.com': 'TECH',
+  'openai.com': 'TECH',
+  'anthropic.com': 'TECH',
+  'huggingface.co': 'TECH',
+  'kaggle.com': 'TECH',
+  'colab.research.google.com': 'TECH',
+  
+  // Social
+  'twitter.com': 'SOCIAL',
+  'x.com': 'SOCIAL',
+  'facebook.com': 'SOCIAL',
+  'instagram.com': 'SOCIAL',
+  'linkedin.com': 'SOCIAL',
+  'threads.net': 'SOCIAL',
+  'bsky.app': 'SOCIAL',
+  'mastodon.social': 'SOCIAL',
+  
+  // Entertainment
+  'youtube.com': 'ENTERTAINMENT',
+  'youtu.be': 'ENTERTAINMENT',
+  'netflix.com': 'ENTERTAINMENT',
+  'twitch.tv': 'ENTERTAINMENT',
+  'reddit.com': 'ENTERTAINMENT',
+  'spotify.com': 'ENTERTAINMENT',
+  'soundcloud.com': 'ENTERTAINMENT',
+  'vimeo.com': 'ENTERTAINMENT',
+  'disneyplus.com': 'ENTERTAINMENT',
+  'hulu.com': 'ENTERTAINMENT',
+  'hbomax.com': 'ENTERTAINMENT',
+  'primevideo.com': 'ENTERTAINMENT',
+  
+  // Shopping
+  'amazon.com': 'SHOPPING',
+  'amazon.': 'SHOPPING',
+  'ebay.com': 'SHOPPING',
+  'etsy.com': 'SHOPPING',
+  'shopify.com': 'SHOPPING',
+  'aliexpress.com': 'SHOPPING',
+  'target.com': 'SHOPPING',
+  'walmart.com': 'SHOPPING',
+  'bestbuy.com': 'SHOPPING',
+  'instacart.com': 'SHOPPING',
+  
+  // News
+  'news.google.com': 'NEWS',
+  'bbc.com': 'NEWS',
+  'cnn.com': 'NEWS',
+  'nytimes.com': 'NEWS',
+  'washingtonpost.com': 'NEWS',
+  'theguardian.com': 'NEWS',
+  'reuters.com': 'NEWS',
+  'bloomberg.com': 'NEWS',
+  'wsj.com': 'NEWS',
+  'techcrunch.com': 'NEWS',
+  'theverge.com': 'NEWS',
+  'wired.com': 'NEWS',
+  
+  // Work
+  'slack.com': 'WORK',
+  'notion.so': 'WORK',
+  'linear.app': 'WORK',
+  'asana.com': 'WORK',
+  'trello.com': 'WORK',
+  'monday.com': 'WORK',
+  'clickup.com': 'WORK',
+  'airtable.com': 'WORK',
+  'figma.com': 'WORK',
+  'canva.com': 'WORK',
+  'miro.com': 'WORK',
+  'zoom.us': 'WORK',
+  'meet.google.com': 'WORK',
+  'teams.microsoft.com': 'WORK',
+  'calendar.google.com': 'WORK',
+  'outlook.com': 'WORK',
+  'gmail.com': 'WORK',
+  'drive.google.com': 'WORK',
+  'docs.google.com': 'WORK',
+  'sheets.google.com': 'WORK',
+  'slides.google.com': 'WORK',
+  'dropbox.com': 'WORK',
+  
+  // Education
+  'coursera.org': 'EDUCATION',
+  'udemy.com': 'EDUCATION',
+  'edx.org': 'EDUCATION',
+  'khanacademy.org': 'EDUCATION',
+  'skillshare.com': 'EDUCATION',
+  'duolingo.com': 'EDUCATION',
+  'brilliant.org': 'EDUCATION',
+  'codecademy.com': 'EDUCATION',
+  'freecodecamp.org': 'EDUCATION',
+  'pluralsight.com': 'EDUCATION',
+  
+  // Reference
+  'wikipedia.org': 'REFERENCE',
+  'wiktionary.org': 'REFERENCE',
+  'dictionary.com': 'REFERENCE',
+  'merriam-webster.com': 'REFERENCE',
+  'docs.': 'REFERENCE',
+  'documentation': 'REFERENCE'
+};
+
 /**
- * Categorize tabs using AI or fallback logic.
+ * Extract domain from URL.
+ * @param {string} url - URL to extract domain from
+ * @returns {string} Domain or empty string
+ */
+function extractDomain(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace('www.', '');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Categorize tabs using domain and content analysis.
  * @param {Array<Object>} tabs - Tabs to categorize
  * @returns {Promise<Array<Object>>} Tabs with categories
  */
@@ -551,74 +856,123 @@ async function categorizeTabs(tabs) {
       };
     }
     
+    // Check domain-based categorization
+    const domain = extractDomain(tab.url);
+    for (const [pattern, category] of Object.entries(DOMAIN_CATEGORIES)) {
+      if (domain === pattern || domain.endsWith(pattern) || domain.includes(pattern)) {
+        return { ...tab, category };
+      }
+    }
+    
+    // Fallback to title/URL-based categorization
     const title = tab.title.toLowerCase();
     const url = tab.url.toLowerCase();
+    const text = `${title} ${url}`;
     
-    // Simple keyword-based categorization
-    if (title.includes('github') || url.includes('github') || 
-        title.includes('stackoverflow') || url.includes('stackoverflow') ||
-        title.includes('code') || url.includes('dev') ||
-        title.includes('terminal') || url.includes('console') ||
-        title.includes('product') || title.includes('pricing') || title.includes('features') ||
-        url.includes('product') || url.includes('pricing') || url.includes('features') ||
-        title.includes('platform') || title.includes('software') || title.includes('app') ||
-        title.includes('api') || url.includes('api') ||
-        title.includes('saas') || url.includes('saas') ||
-        title.includes('startup') || url.includes('startup') ||
-        title.includes('tech') || url.includes('tech') ||
-        title.includes('cloud') || url.includes('cloud') ||
-        title.includes('data') || url.includes('data') ||
-        title.includes('ai') || url.includes('ai') || title.includes('artificial intelligence') ||
-        title.includes('machine learning') || title.includes('llm') ||
-        title.includes('framework') || title.includes('library')) {
+    // AI keywords
+    if (text.includes('claude') || text.includes('gpt') || text.includes('chatgpt') ||
+        text.includes('openai') || text.includes('anthropic') || text.includes('x.ai') ||
+        text.includes('xai') || text.includes('grok') || text.includes('perplexity') ||
+        text.includes('midjourney') || text.includes('stable diffusion') || text.includes('runway') ||
+        text.includes('huggingface') || text.includes('llm') || text.includes('large language model') ||
+        text.includes('prompt') || text.includes('prompts') || text.includes('agent') ||
+        text.includes('agents') || text.includes('agentic') || text.includes('autonomous') ||
+        text.includes('cursor') || text.includes('windsurf') || text.includes('copilot') ||
+        text.includes('tabnine') || text.includes('aider') || text.includes('replit') ||
+        text.includes('bolt.new') || text.includes('v0.dev') || text.includes('zed') ||
+        text.includes('artificial intelligence') || text.includes('machine learning') ||
+        text.includes('deep learning') || text.includes('neural network') || text.includes('transformer') ||
+        text.includes('generative ai') || text.includes('genai') || text.includes('gen ai') ||
+        text.includes('ai model') || text.includes('ai tool') || text.includes('ai assistant') ||
+        text.includes('chatbot') || text.includes('conversation ai') || text.includes('nlp') ||
+        text.includes('natural language') || text.includes('computer vision') || text.includes('image generation') ||
+        text.includes('text generation') || text.includes('code generation') || text.includes('skill.md') ||
+        text.includes('glm') || text.includes('zhipu') || text.includes('qwen') || text.includes('llama') ||
+        text.includes('mistral') || text.includes('gemini') || text.includes('bard') ||
+        text.includes('deepseek') || text.includes('yi') || text.includes('moonshot') ||
+        text.includes('kimi') || text.includes('doubao') || text.includes('ernie') ||
+        text.includes('palm') || text.includes('falcon') || text.includes('vicuna') ||
+        text.includes('alpaca') || text.includes('stablelm') || text.includes('dolly')) {
+      return { ...tab, category: 'AI' };
+    }
+    
+    // Tech keywords
+    if (text.includes('github') || text.includes('stackoverflow') ||
+        text.includes('code') || text.includes('dev') ||
+        text.includes('terminal') || text.includes('console') ||
+        text.includes('product') || text.includes('pricing') || text.includes('features') ||
+        text.includes('platform') || text.includes('software') || text.includes('app') ||
+        text.includes('api') || text.includes('sdk') ||
+        text.includes('saas') || text.includes('startup') ||
+        text.includes('tech') || text.includes('cloud') ||
+        text.includes('data') || text.includes('ai') ||
+        text.includes('artificial intelligence') || text.includes('machine learning') ||
+        text.includes('llm') || text.includes('framework') || text.includes('library') ||
+        text.includes('developer') || text.includes('documentation') ||
+        text.includes('git') || text.includes('programming') ||
+        text.includes('javascript') || text.includes('python') ||
+        text.includes('react') || text.includes('node') ||
+        text.includes('typescript') || text.includes('rust') ||
+        text.includes('golang') || text.includes('open source')) {
       return { ...tab, category: 'TECH' };
     }
     
-    if (title.includes('facebook') || url.includes('facebook') ||
-        title.includes('twitter') || url.includes('twitter') ||
-        title.includes('instagram') || url.includes('instagram') ||
-        title.includes('linkedin') || url.includes('linkedin')) {
+    // Social keywords
+    if (text.includes('facebook') || text.includes('twitter') ||
+        text.includes('instagram') || text.includes('linkedin') ||
+        text.includes('social') || text.includes('profile')) {
       return { ...tab, category: 'SOCIAL' };
     }
     
-    if (title.includes('youtube') || url.includes('youtube') ||
-        title.includes('netflix') || url.includes('netflix') ||
-        title.includes('twitch') || url.includes('twitch') ||
-        title.includes('reddit') || url.includes('reddit')) {
+    // Entertainment keywords
+    if (text.includes('youtube') || text.includes('netflix') ||
+        text.includes('twitch') || text.includes('reddit') ||
+        text.includes('spotify') || text.includes('music') ||
+        text.includes('video') || text.includes('movie') ||
+        text.includes('game') || text.includes('play') ||
+        text.includes('entertainment')) {
       return { ...tab, category: 'ENTERTAINMENT' };
     }
     
-    if (title.includes('amazon') || url.includes('amazon') ||
-        title.includes('shop') || url.includes('shop') ||
-        title.includes('buy') || url.includes('buy') ||
-        title.includes('cart') || url.includes('cart')) {
+    // Shopping keywords
+    if (text.includes('amazon') || text.includes('shop') ||
+        text.includes('buy') || text.includes('cart') ||
+        text.includes('checkout') || text.includes('order') ||
+        text.includes('price') || text.includes('store') ||
+        text.includes('product') && text.includes('buy')) {
       return { ...tab, category: 'SHOPPING' };
     }
     
-    if (title.includes('news') || url.includes('news') ||
-        title.includes('bbc') || url.includes('bbc') ||
-        title.includes('cnn') || url.includes('cnn') ||
-        title.includes('times') || url.includes('times')) {
+    // News keywords
+    if (text.includes('news') || text.includes('bbc') ||
+        text.includes('cnn') || text.includes('times') ||
+        text.includes('breaking') || text.includes('headline') ||
+        text.includes('latest') || text.includes('/news/')) {
       return { ...tab, category: 'NEWS' };
     }
     
-    if (title.includes('work') || url.includes('work') ||
-        title.includes('office') || url.includes('office') ||
-        title.includes('slack') || url.includes('slack') ||
-        title.includes('teams') || url.includes('teams')) {
+    // Work keywords
+    if (text.includes('work') || text.includes('office') ||
+        text.includes('slack') || text.includes('teams') ||
+        text.includes('meeting') || text.includes('calendar') ||
+        text.includes('email') || text.includes('inbox') ||
+        text.includes('document') || text.includes('spreadsheet') ||
+        text.includes('presentation') || text.includes('project')) {
       return { ...tab, category: 'WORK' };
     }
     
-    if (title.includes('learn') || url.includes('learn') ||
-        title.includes('course') || url.includes('course') ||
-        title.includes('tutorial') || url.includes('tutorial') ||
-        title.includes('edu') || url.includes('edu')) {
+    // Education keywords
+    if (text.includes('learn') || text.includes('course') ||
+        text.includes('tutorial') || text.includes('edu') ||
+        text.includes('training') || text.includes('class') ||
+        text.includes('lesson') || text.includes('education')) {
       return { ...tab, category: 'EDUCATION' };
     }
     
-    if (title.includes('wiki') || url.includes('wiki') ||
-        title.includes('docs') || url.includes('docs') ||
-        title.includes('documentation') || url.includes('documentation')) {
+    // Reference keywords
+    if (text.includes('wiki') || text.includes('docs') ||
+        text.includes('documentation') || text.includes('reference') ||
+        text.includes('dictionary') || text.includes('encyclopedia')) {
       return { ...tab, category: 'REFERENCE' };
     }
     
