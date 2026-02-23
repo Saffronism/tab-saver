@@ -27,15 +27,16 @@ const CATEGORIES = {
 
 /** @type {Object} Form/Application detection patterns */
 const FORM_PATTERNS = {
-  job: ['job application', 'apply', 'career', 'employment', 'resume', 'cover letter'],
-  school: ['college application', 'university application', 'admission', 'enrollment', 'scholarship'],
-  visa: ['visa application', 'passport', 'immigration', 'travel permit'],
-  tax: ['tax form', 'tax return', 'irs', 'tax filing'],
-  medical: ['medical form', 'patient form', 'health form', 'insurance claim'],
-  legal: ['legal form', 'contract', 'agreement', 'legal document'],
-  government: ['government form', 'dmv', 'social security', 'benefits', 'permit'],
-  banking: ['bank application', 'loan application', 'credit card', 'account opening'],
-  housing: ['rental application', 'lease', 'housing form', 'apartment application']
+  job: ['job application', 'apply', 'career', 'employment', 'resume', 'cover letter', 'job opening', 'hiring', 'position', 'applicant', 'opportunity'],
+  school: ['college application', 'university application', 'admission', 'enrollment', 'scholarship', 'financial aid', 'fafsa', 'degree program'],
+  visa: ['visa application', 'passport', 'immigration', 'travel permit', 'citizenship', 'consulate', 'embassy'],
+  tax: ['tax form', 'tax return', 'irs', 'tax filing', 'w-2', '1099', 'tax refund'],
+  medical: ['medical form', 'patient form', 'health form', 'insurance claim', 'medical history', 'consent form'],
+  legal: ['legal form', 'contract', 'agreement', 'legal document', 'nda', 'waiver', 'liability', 'terms of service', 'privacy policy update'],
+  government: ['government form', 'dmv', 'social security', 'benefits', 'permit', 'license renewal', 'voter registration'],
+  banking: ['bank application', 'loan application', 'credit card', 'account opening', 'mortgage application', 'financing'],
+  housing: ['rental application', 'lease', 'housing form', 'apartment application', 'tenant application', 'sublet', 'roommate'],
+  general_application: ['registration form', 'sign up form', 'join waitlist', 'waitlist', 'early access', 'apply now', 'submit application', 'call for papers', 'cfp', 'submission form', 'grant application']
 };
 
 /**
@@ -310,11 +311,20 @@ function detectForm(tab) {
 function extractDeadline(text) {
   // Common deadline patterns
   const patterns = [
-    /deadline[:\s]+(\w+\s+\d{1,2},?\s+\d{4})/i,
-    /due[:\s]+(\w+\s+\d{1,2},?\s+\d{4})/i,
-    /by[:\s]+(\w+\s+\d{1,2},?\s+\d{4})/i,
-    /(\d{1,2}\/\d{1,2}\/\d{2,4})/g,
-    /(\w+\s+\d{1,2},?\s+\d{4})/g
+    /deadline[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /due[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /by[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /closes[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /ends[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /expires[:\s]+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})/i,
+    /deadline[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /due[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /by[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /closes[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /ends[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /expires[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/g,
+    /\b(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})\b/g
   ];
   
   for (const pattern of patterns) {
@@ -352,7 +362,19 @@ async function categorizeTabs(tabs) {
     if (title.includes('github') || url.includes('github') || 
         title.includes('stackoverflow') || url.includes('stackoverflow') ||
         title.includes('code') || url.includes('dev') ||
-        title.includes('terminal') || url.includes('console')) {
+        title.includes('terminal') || url.includes('console') ||
+        title.includes('product') || title.includes('pricing') || title.includes('features') ||
+        url.includes('product') || url.includes('pricing') || url.includes('features') ||
+        title.includes('platform') || title.includes('software') || title.includes('app') ||
+        title.includes('api') || url.includes('api') ||
+        title.includes('saas') || url.includes('saas') ||
+        title.includes('startup') || url.includes('startup') ||
+        title.includes('tech') || url.includes('tech') ||
+        title.includes('cloud') || url.includes('cloud') ||
+        title.includes('data') || url.includes('data') ||
+        title.includes('ai') || url.includes('ai') || title.includes('artificial intelligence') ||
+        title.includes('machine learning') || title.includes('llm') ||
+        title.includes('framework') || title.includes('library')) {
       return { ...tab, category: 'TECH' };
     }
     
