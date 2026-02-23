@@ -69,7 +69,7 @@ function setupEventListeners() {
 }
 
 /**
- * Save all open tabs to storage.
+ * Save all open tabs to storage, prioritizing forms and applications.
  * @returns {Promise<void>}
  */
 async function handleSaveAll() {
@@ -97,8 +97,31 @@ async function handleSaveAll() {
       return;
     }
 
+    // Categorize tabs and detect forms
+    const categorizedTabs = await categorizeTabs(tabData);
+    
+    // Prioritize forms and applications with deadlines
+    const priorityTabs = categorizedTabs.filter(tab => 
+      tab.category === 'APPLICATIONS' || tab.deadline
+    );
+    const regularTabs = categorizedTabs.filter(tab => 
+      tab.category !== 'APPLICATIONS' && !tab.deadline
+    );
+    
+    // Show priority notification
+    if (priorityTabs.length > 0) {
+      const deadlineCount = priorityTabs.filter(tab => tab.deadline).length;
+      const formCount = priorityTabs.length - deadlineCount;
+      let priorityMsg = `Saved ${priorityTabs.length} important tab${priorityTabs.length !== 1 ? 's' : ''}`;
+      if (deadlineCount > 0) priorityMsg += ` (${deadlineCount} with deadline${deadlineCount !== 1 ? 's' : ''})`;
+      if (formCount > 0) priorityMsg += ` (${formCount} form${formCount !== 1 ? 's' : ''})`;
+      showNotification(priorityMsg);
+    } else {
+      showNotification(`Saved ${tabData.length} tabs`);
+    }
+
     const existingTabs = await getStoredTabs();
-    const updatedTabs = [...existingTabs, ...tabData];
+    const updatedTabs = [...existingTabs, ...categorizedTabs];
 
     await chrome.storage.local.set({ [STORAGE_KEY]: updatedTabs });
     savedTabs = updatedTabs;
@@ -110,7 +133,6 @@ async function handleSaveAll() {
     await chrome.tabs.remove(tabIds);
 
     updateUI();
-    showNotification(`Saved ${tabData.length} tabs`);
   } catch (error) {
     console.error('Error saving tabs:', error);
     showNotification('Failed to save tabs');
@@ -544,16 +566,32 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+/** @type {string} Google Form URL for feedback */
+const GOOGLE_FORM_URL = 'https://forms.gle/YW9ZRA4pEiU8mdCv8';
+
 /**
  * Handle feedback button click.
  * @returns {void}
  */
 function handleFeedback() {
-  const subject = encodeURIComponent('Tab Saver Extension Feedback');
-  const body = encodeURIComponent('Hi!\n\nI\'m using your Tab Saver Chrome extension and wanted to share some feedback:\n\n');
-  const mailtoUrl = `mailto:shannicrankcafe@gmail.com?subject=${subject}&body=${body}`;
-  
-  window.open(mailtoUrl, '_blank');
+  try {
+    // Open Google Form in new tab
+    chrome.tabs.create({
+      url: GOOGLE_FORM_URL,
+      active: true
+    });
+    
+    showNotification('Opening feedback form...');
+  } catch (error) {
+    console.error('Feedback error:', error);
+    // Fallback to email if form fails
+    const email = 'shannicrankcafe@gmail.com';
+    navigator.clipboard.writeText(email).then(() => {
+      showNotification('Form unavailable. Email copied: ' + email);
+    }).catch(() => {
+      showNotification('Feedback email: shannicrankcafe@gmail.com');
+    });
+  }
 }
 
 /**
@@ -562,6 +600,24 @@ function handleFeedback() {
  * @returns {void}
  */
 function showNotification(message) {
-  // Simple notification - could be enhanced
-  console.log(message);
+  // Remove existing notification if any
+  const existing = document.querySelector('.notification');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = 'notification';
+  notification.textContent = message;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
 }
